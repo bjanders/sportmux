@@ -1,0 +1,9 @@
+[Unit]
+Description=Serial port multiplexer
+After=network.target
+
+[Service]
+ExecStart=/usr/local/sbin/sportmux
+
+[Install]
+WantedBy=multi-user.target
