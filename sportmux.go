@@ -35,7 +35,7 @@ func (cList *clientList) Remove(c *client) {
 }
 
 type client struct {
-	in      chan string
+	in  chan string
 	out io.Writer
 	//out     chan string
 	conn    net.Conn
@@ -45,7 +45,7 @@ type client struct {
 
 func main() {
 	opt := serial.OpenOptions{
-		PortName:        "/dev/ttyACM0",
+		PortName:        "/dev/valvecan",
 		BaudRate:        9600,
 		DataBits:        8,
 		StopBits:        1,
@@ -53,7 +53,7 @@ func main() {
 	}
 	port, err := serial.Open(opt)
 	if err != nil {
-		log.Fatalf("serial.Open: %v", err)
+		log.Fatalf("Failed to open serial port: %v", err)
 	}
 	defer port.Close()
 	valveCh := make(chan string, 1)
@@ -66,8 +66,8 @@ func main() {
 	for {
 		conn, err := ln.Accept()
 		cli := client{
-			in: make(chan string),
-			out: port,
+			in:      make(chan string),
+			out:     port,
 			conn:    conn,
 			quit:    make(chan bool),
 			clients: cList,
@@ -86,7 +86,7 @@ func clientReader(cli *client) {
 	for reader.Scan() {
 		s := reader.Text()
 		fmt.Println(s)
-		_, err := io.WriteString(cli.out, s + "\n")
+		_, err := io.WriteString(cli.out, s+"\n")
 		if err != nil {
 			break
 		}
