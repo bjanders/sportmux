@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -44,9 +45,13 @@ type client struct {
 }
 
 func main() {
+	portName := flag.String("serialport", "/dev/ttyACM0", "serial port device")
+	baudRate := flag.Int("baud", 9600, "baud rate")
+	listenAddress := flag.String("tcplisten", ":41000", "TCP address and port to listen to")
+	flag.Parse()
 	opt := serial.OpenOptions{
-		PortName:        "/dev/valvecan",
-		BaudRate:        9600,
+		PortName:        *portName,
+		BaudRate:        uint(*baudRate),
 		DataBits:        8,
 		StopBits:        1,
 		MinimumReadSize: 4,
@@ -59,7 +64,7 @@ func main() {
 	valveCh := make(chan string, 1)
 	cList := newClientList()
 	go portReader(port, cList, valveCh)
-	ln, err := net.Listen("tcp", ":41000")
+	ln, err := net.Listen("tcp", *listenAddress)
 	if err != nil {
 		panic("Unable to listen")
 	}
@@ -117,7 +122,7 @@ func portReader(port io.ReadWriteCloser, cList *clientList, valveCh chan string)
 		//fmt.Println(str)
 		cList.m.Lock()
 		//fmt.Printf("Clients: %d\n", len(cList.clients))
-		for cli, _ := range cList.clients {
+		for cli := range cList.clients {
 			cli.in <- str + "\n"
 		}
 		cList.m.Unlock()
